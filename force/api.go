@@ -231,7 +231,6 @@ func (forceAPI *ForceAPI) RefreshToken() error {
 		"client_id":     []string{forceAPI.oauth.clientID},
 		"client_secret": []string{forceAPI.oauth.clientSecret},
 	}
-	res.ID = "a test"
 
 	err := forceAPI.Post("/services/oauth2/token", params, nil, res)
 	if err != nil {
