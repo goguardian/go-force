@@ -104,22 +104,32 @@ func (forceAPI *ForceAPI) request(method, path string, params url.Values, payloa
 	forceAPI.traceResponseBody(respBytes)
 
 	// Attempt to parse response into out
-	var objectUnmarshalErr error
 	if out != nil {
-		objectUnmarshalErr = json.Unmarshal(respBytes, out)
-		if objectUnmarshalErr == nil {
-			return nil
+		objectUnmarshalErr := json.Unmarshal(respBytes, out)
+		if objectUnmarshalErr != nil {
+			// Not a force.com API error, just an unmarshalling error.
+			return fmt.Errorf("unable to unmarshal response to object: %v", objectUnmarshalErr)
 		}
 	}
 
-	// Attempt to parse response as a force.com api error before returning object unmarshal err
+	// Attempt to parse response as a force.com API error before returning object
+	// unmarshal err
 	apiErrors := APIErrors{}
 	if marshalErr := json.Unmarshal(respBytes, &apiErrors); marshalErr == nil {
 		if apiErrors.Validate() {
 			// Check if error is oauth token expired
 			if forceAPI.oauth.Expired(apiErrors) {
+
 				// Reauthenticate then attempt query again
-				oauthErr := forceAPI.oauth.Authenticate()
+				var oauthErr error
+				if forceAPI.oauth.refreshToken != "" {
+					// Re-auth using refresh token
+					oauthErr = forceAPI.RefreshToken()
+				} else {
+					// Re-auth using username/password
+					oauthErr = forceAPI.oauth.Authenticate()
+				}
+
 				if oauthErr != nil {
 					return oauthErr
 				}
@@ -129,11 +139,6 @@ func (forceAPI *ForceAPI) request(method, path string, params url.Values, payloa
 
 			return apiErrors
 		}
-	}
-
-	if objectUnmarshalErr != nil {
-		// Not a force.com api error. Just an unmarshalling error.
-		return fmt.Errorf("Unable to unmarshal response to object: %v", objectUnmarshalErr)
 	}
 
 	// Sometimes no response is expected. For example delete and update. We still have to make sure an error wasn't returned.
