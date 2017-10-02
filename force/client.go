@@ -108,7 +108,11 @@ func (forceAPI *ForceAPI) request(method, path string, params url.Values, payloa
 		objectUnmarshalErr := json.Unmarshal(respBytes, out)
 		if objectUnmarshalErr != nil {
 			// Not a force.com API error, just an unmarshalling error.
-			return fmt.Errorf("unable to unmarshal response to object: %v", objectUnmarshalErr)
+			return fmt.Errorf(
+				"unable to unmarshal response to object: %v, body: %s, status: %d",
+				objectUnmarshalErr,
+				respBytes,
+				resp.StatusCode)
 		}
 	}
 
