@@ -46,6 +46,12 @@ func (forceAPI *ForceAPI) Delete(path string, params url.Values) error {
 	return forceAPI.request("DELETE", path, params, nil, nil)
 }
 
+// DeleteWithResponse issues a DELETE to the specified path with the given payload
+// and put the unmarshalled (json) response in the third parameter.
+func (forceAPI *ForceAPI) DeleteWithResponse(path string, params url.Values, out interface{}) error {
+	return forceAPI.request("DELETE", path, params, nil, out)
+}
+
 func (forceAPI *ForceAPI) request(method, path string, params url.Values, payload, out interface{}) error {
 	if err := forceAPI.oauth.Validate(); err != nil {
 		return fmt.Errorf("Error creating %v request: %v", method, err)
